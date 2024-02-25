@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Stock syncronizer
- * Version: 0.0.1
+ * Version: 0.0.2
  * Author: Mikkel Dalby
  * Author URI: https://mikkeldalby.dk
  * Description: This plugin helps with syncronizing product stock across multiple products in your shop.
@@ -13,6 +13,33 @@
 
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
     // Put your plugin code here
+
+    // Define new columns
+    function stock_sync_set_columns($columns) {
+        $columns['product_to_sync'] = __('Stock sync', 'cs-text');
+    
+        return $columns;
+    }
+    add_filter( 'manage_product_posts_columns', 'stock_sync_set_columns');
+    
+    // Show custom field in a new column
+    function stock_sync_custom_column( $column, $post_id ) {
+    
+        switch ( $column ) {
+            case 'product_to_sync' : // This has to match to the defined column in function above
+                $product_ids = get_post_meta( $post_id, '_stock_sync_data_ids', true );
+                $product2 = null;
+                
+                if (isset($product_ids[0])) {
+
+                    $product = wc_get_product( $product_ids[0] );
+                    echo '(' . strval($product_ids[0]) . ') ' . wp_kses_post( $product->get_formatted_name());
+                }
+                break;
+        }
+        
+    }
+    add_action( 'manage_product_posts_custom_column' , 'stock_sync_custom_column', 10, 2 );
 
     add_filter('woocommerce_product_data_tabs', function($tabs) {
     	$tabs['additional_info'] = [
